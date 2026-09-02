@@ -35,8 +35,6 @@ def run_tool(name, tool_input):
         return {"ticket_id": "T123", "received_at": tool_input["received_at"]}
     return {"error": f"Unknown tool: {name}"}
 
-
-
 def main():
     print("Hello from gtm-ticket-triage!")
 
