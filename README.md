@@ -9,8 +9,8 @@ Agentic Architecture (27%), Tool Design & MCP (18%), Claude Code Workflows (20%)
 
 ## Week 1 — Core loop + tools (Domain 1 & 2 foundations)
 
-- [ ] Set up repo, venv, `anthropic` SDK, `.env` for API key
-- [ ] Build a mock ticket dataset (15-20 rows: subject, body, sender, urgency signals) as CSV
+- [x] Set up repo, venv, `anthropic` SDK, `.env` for API key
+- [x] Build a mock ticket dataset (15-20 rows: subject, body, sender, urgency signals) as CSV
 - [ ] Write a raw agent loop using `messages.create` — no SDK helpers: send ticket, inspect `stop_reason`, handle `tool_use` by executing a Python function and feeding `tool_result` back, loop until `end_turn`
 - [ ] Define 3 tools (`lookup_account`, `create_task`, `escalate_to_human`) with strict JSON schemas — practice writing schemas that prevent ambiguous calls
 - [ ] Add a confidence check: if the model's triage confidence is low, force a call to `escalate_to_human` instead of auto-resolving
