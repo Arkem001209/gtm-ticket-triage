@@ -1,6 +1,5 @@
 import json
 import csv
-from collections import defaultdict
 from dotenv import load_dotenv
 from anthropic import Anthropic
 from pathlib import Path
@@ -10,7 +9,6 @@ load_dotenv()
 client = Anthropic()
 TICKETS_PATH = Path("data/tickets.csv")
 
-file_object = client.files.upload(file=Path("data/tickets.csv"))
 
 tools = [
     {
