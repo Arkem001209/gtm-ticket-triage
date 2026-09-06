@@ -1,10 +1,13 @@
 import json
 from dotenv import load_dotenv
 from anthropic import Anthropic
+from pathlib import Path
 
 load_dotenv()
 
 client = Anthropic()
+
+file_object = client.files.upload(file=Path("data/tickets.csv"))
 
 tools = [
     {
@@ -17,7 +20,8 @@ tools = [
             },
             "required": ["email"],
         },
-    }
+    },
+    {"type": "code_execution_20250825", "name": "code_execution"}
     ]
 def run_tool(name, tool_input):
     if name == "lookup_account":
@@ -27,7 +31,10 @@ def run_tool(name, tool_input):
 messages = [
     {
         "role": "user",
-        "content": "ticket received from tom.reilly@brightpath.org"
+        "content": [
+            {"type":"text", "text":"ticket received from tom.reilly@brightpath.org collect the account details for this account from the csv file attached."},
+            {"type":"container_upload", "file_id": file_object.id},
+        ],
     }
 ]
 
