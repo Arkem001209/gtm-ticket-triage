@@ -1,4 +1,6 @@
 import json
+import csv
+from collections import defaultdict
 from dotenv import load_dotenv
 from anthropic import Anthropic
 from pathlib import Path
@@ -6,13 +8,14 @@ from pathlib import Path
 load_dotenv()
 
 client = Anthropic()
+TICKETS_PATH = Path("data/tickets.csv")
 
 file_object = client.files.upload(file=Path("data/tickets.csv"))
 
 tools = [
     {
         "name": "lookup_account",
-        "description": "Look up account tier, contract status, and support history for a customer by email address. Support history should include total number fo tickets and the 3 most recent ticket IDs. Use this before deciding ticket priority or routing.",
+        "description": "Look up account tier, contract status, and support history for a customer by email address. Support history should include total number fo tickets and the 3 most recent ticket IDs. Use this before deciding ticket priority or routing. dont return any other details from the csv file.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -20,21 +23,45 @@ tools = [
             },
             "required": ["email"],
         },
-    },
-    {"type": "code_execution_20250825", "name": "code_execution"}
+    }
     ]
+
+def lookup_account(email):
+    with TICKETS_PATH.open(newline="") as f:
+        rows = list(csv.DictReader(f))
+
+    email = email.strip().lower()
+    sender_rows = [r for r in rows if r["sender_email"].strip().lower() == email]
+    if not sender_rows:
+        return {"error": f"No account found for {email}"}
+
+    account_name = sender_rows[0]["account_name"]
+    tier = sender_rows[0]["account_tier"]
+
+    account_rows = (
+        [r for r in rows if r["account_name"] == account_name]
+        if account_name
+        else sender_rows
+    )
+    account_rows.sort(key=lambda r: r["received_at"], reverse=True)
+
+    return {
+        "account_name": account_name,
+        "account_tier": tier,
+        "account_status": "active", 
+        "total_ticket_count": len(account_rows),
+        "recent_ticket_ids": [r["ticket_id"] for r in account_rows[:3]],
+    }
+
 def run_tool(name, tool_input):
     if name == "lookup_account":
-        return {"account_tier":"Enterprise", "account_status":"active","open_ticket_count": 23,"open_ticket_ids" : ["T001", "T002", "T003"]}
+        return lookup_account(tool_input["email"])
     return {"error": f"Unknown tool: {name}"}
 
 messages = [
     {
         "role": "user",
-        "content": [
-            {"type":"text", "text":"ticket received from tom.reilly@brightpath.org collect the account details for this account from the csv file attached."},
-            {"type":"container_upload", "file_id": file_object.id},
-        ],
+        "content": ("ticket received from tom.reilly@brightpath.org collect the account details for this account."),
     }
 ]
 
