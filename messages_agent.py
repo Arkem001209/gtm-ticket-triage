@@ -21,7 +21,33 @@ tools = [
             },
             "required": ["email"],
         },
+    },
+    {
+        "name": "create_task",
+        "description": "Use the notes value of the account lookup to create a task based on your previous triage result summary for action by future agents",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "account_name": {"type":"string", "description" : "the account name field from lookup_account"},
+                "account_tier": {"type":"string", "description" : "the account tier derived from the lookup_account call"},
+                "notes": {"type":"string", "description" : "Details of the ticket sent from a client detailing the issue or request received from lookup_account"}
+            },
+            "required": ["email", "account_tier","notes"],
+        },
+    },
+    {
+        #TO DO - DEFINE ESCALATE TO HUMAN BEFORE RUNNING AGAIN
+        "name": "escalate_to_human",
+        "description": "",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "email": {"type":"string", "description" : "senders email address from the ticket"}
+            },
+            "required": ["email"],
+        },
     }
+        
     ]
 
 def lookup_account(email):
@@ -59,7 +85,7 @@ def run_tool(name, tool_input):
 messages = [
     {
         "role": "user",
-        "content": ("ticket received from tom.reilly@brightpath.org collect the account details for this account."),
+        "content": ("triage the ticket received from tom.reilly@brightpath.org. collect the account details for this account, decide on "),
     }
 ]
 
@@ -68,6 +94,7 @@ response = client.messages.create(
     max_tokens=1024,
     tools=tools,
     tool_choice={"type": "auto", "disable_parallel_tool_use": True},
+    system="You are a GTM support ticket triage agent. Your job is to receive requests from the user and triage them based on the account details you can get by using lookup_account. Based on that tirage you should then either create a task to resolve the ticket for low - medium requests. if the request urgency is high and they are an enterprise customer, escalate to a human operator. ",
     messages=messages,
 )
 
