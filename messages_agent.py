@@ -38,11 +38,11 @@ tools = [
     {
         #TO DO - DEFINE ESCALATE TO HUMAN BEFORE RUNNING AGAIN
         "name": "escalate_to_human",
-        "description": "",
+        "description": "If the confidence score is below 0.5 use this tool to respond to the user that a human operator will be in touch",
         "input_schema": {
             "type": "object",
             "properties": {
-                "email": {"type":"string", "description" : "senders email address from the ticket"}
+                "confidence_score": {"type":"float", "description" : "score from 0.0 to 10.0 on how confident the agent is "}
             },
             "required": ["email"],
         },
@@ -94,7 +94,18 @@ response = client.messages.create(
     max_tokens=1024,
     tools=tools,
     tool_choice={"type": "auto", "disable_parallel_tool_use": True},
-    system="You are a GTM support ticket triage agent. Your job is to receive requests from the user and triage them based on the account details you can get by using lookup_account. Based on that tirage you should then either create a task to resolve the ticket for low - medium requests. if the request urgency is high and they are an enterprise customer, escalate to a human operator. ",
+    system="""
+
+    You are a GTM support ticket triage agent. Your job is to receive requests from the user and triage them based on the account details you can get by using lookup_account. 
+    you should read the subject, and support ticket content and lookup the account using the lookup_account tool to gather as much information as possible. Then, create a confidence score on the context of the information you have.
+
+    The confidence score. a float range of 0.0 to 10.0
+
+    9.0 + = ticket and account unambiguously fit one category beyond reasonable doubt
+    0.51 to 9.0 means you are reasonably confident in the categorisation of the ticket and can handle the request while needing to clear up some details
+    0 to 0.5 means that major details are missing and context contradicts itself. If the score is this low you should escalate to a human using the appropriate tool.
+
+    """,
     messages=messages,
 )
 
