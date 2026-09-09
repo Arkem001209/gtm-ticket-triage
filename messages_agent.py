@@ -85,7 +85,7 @@ def run_tool(name, tool_input):
 messages = [
     {
         "role": "user",
-        "content": ("triage the ticket received from tom.reilly@brightpath.org. collect the account details for this account, decide on "),
+        "content": ("TICKET RECIEVED: subject: Thinking about cancelling, body: We're not seeing the ROI we expected and our renewal is coming up next month. We're seriously considering switching to a competitor. Can someone from your team call us this week? email: tom.reilly@brightpath.org "),
     }
 ]
 
@@ -97,13 +97,23 @@ response = client.messages.create(
     system="""
 
     You are a GTM support ticket triage agent. Your job is to receive requests from the user and triage them based on the account details you can get by using lookup_account. 
-    you should read the subject, and support ticket content and lookup the account using the lookup_account tool to gather as much information as possible. Then, create a confidence score on the context of the information you have.
+    you should read the subject, and support ticket content and lookup the account using the lookup_account tool to gather information . Then, once you receive that context decide how confident you are in the category that the request should fall under.
 
-    The confidence score. a float range of 0.0 to 10.0
+    Categories: billing, sales enquiry, bug report, churn risk, general question, not actionable, compliance
 
-    9.0 + = ticket and account unambiguously fit one category beyond reasonable doubt
-    0.51 to 9.0 means you are reasonably confident in the categorisation of the ticket and can handle the request while needing to clear up some details
-    0 to 0.5 means that major details are missing and context contradicts itself. If the score is this low you should escalate to a human using the appropriate tool.
+    score your confidence in categorisation under either low, medium or high
+
+    the possible next actions are: create_task, request_more_info, and escalate_to_human
+
+    if confidence = low always use the tool escalate_to_human as your next action
+
+    if confience = medium always use the tool request_more_info as your next action
+
+    if confidence = high you can use create_task to queue up the response
+
+    The next step can also be decided by some key categories. If the category is churn risk, billing, cancellation, compliance or high priority outage always escalate to a human
+
+    if there is a clear dispute and the account is a payer, always create_task
 
     """,
     messages=messages,
